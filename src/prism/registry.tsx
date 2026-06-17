@@ -205,7 +205,7 @@ export const { registry } = defineRegistry(catalog, {
 
       return (
         <div
-          className={`flex w-full flex-col gap-4 ${widths[props.maxWidth ?? "md"]}`}
+          className={`mx-auto flex w-full flex-col gap-4 ${widths[props.maxWidth ?? "md"]}`}
         >
           {children}
         </div>
