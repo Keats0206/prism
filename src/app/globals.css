@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f5f5f4;
   --foreground: #171717;
 }
 
@@ -10,6 +10,41 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-surface: var(--prism-surface);
+  --color-surface-muted: var(--prism-surface-muted);
+  --color-surface-elevated: var(--prism-surface-elevated);
+  --color-fg: var(--prism-fg);
+  --color-fg-secondary: var(--prism-fg-secondary);
+  --color-muted: var(--prism-muted);
+  --color-subtle: var(--prism-subtle);
+  --color-border: var(--prism-border);
+  --color-border-subtle: var(--prism-border-subtle);
+  --color-border-strong: var(--prism-border-strong);
+  --color-primary: var(--prism-primary);
+  --color-primary-fg: var(--prism-primary-fg);
+  --color-track: var(--prism-track);
+  --color-track-strong: var(--prism-track-strong);
+  --color-accent: var(--prism-accent);
+  --color-accent-subtle: var(--prism-accent-subtle);
+  --color-accent-border: var(--prism-accent-border);
+  --color-accent-fg: var(--prism-accent-fg);
+  --color-success: var(--prism-success);
+  --color-success-subtle: var(--prism-success-subtle);
+  --color-success-border: var(--prism-success-border);
+  --color-success-fg: var(--prism-success-fg);
+  --color-warning: var(--prism-warning);
+  --color-warning-subtle: var(--prism-warning-subtle);
+  --color-warning-border: var(--prism-warning-border);
+  --color-warning-fg: var(--prism-warning-fg);
+  --color-inverse: var(--prism-inverse);
+  --color-inverse-fg: var(--prism-inverse-fg);
+  --color-dot-inactive: var(--prism-dot-inactive);
+  --color-star: var(--prism-star);
+  --color-star-inactive: var(--prism-star-inactive);
+  --color-embed: var(--prism-embed);
+  --color-media: var(--prism-media);
+  --color-placeholder: var(--prism-placeholder);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +58,79 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.prism-theme {
+  --prism-surface: #ffffff;
+  --prism-surface-muted: #fafaf9;
+  --prism-surface-elevated: #f4f4f5;
+  --prism-fg: #09090b;
+  --prism-fg-secondary: #3f3f46;
+  --prism-muted: #71717a;
+  --prism-subtle: #a1a1aa;
+  --prism-border: rgb(0 0 0 / 0.1);
+  --prism-border-subtle: rgb(0 0 0 / 0.05);
+  --prism-border-strong: rgb(0 0 0 / 0.15);
+  --prism-primary: #09090b;
+  --prism-primary-fg: #ffffff;
+  --prism-track: rgb(0 0 0 / 0.05);
+  --prism-track-strong: rgb(0 0 0 / 0.1);
+  --prism-accent: #0369a1;
+  --prism-accent-subtle: #f0f9ff;
+  --prism-accent-border: #bae6fd;
+  --prism-accent-fg: #082f49;
+  --prism-success: #047857;
+  --prism-success-subtle: #ecfdf5;
+  --prism-success-border: #a7f3d0;
+  --prism-success-fg: #022c22;
+  --prism-warning: #b45309;
+  --prism-warning-subtle: #fffbeb;
+  --prism-warning-border: #fde68a;
+  --prism-warning-fg: #451a03;
+  --prism-inverse: #09090b;
+  --prism-inverse-fg: #ffffff;
+  --prism-dot-inactive: #d4d4d8;
+  --prism-star: #fbbf24;
+  --prism-star-inactive: #e4e4e7;
+  --prism-embed: #121212;
+  --prism-media: #000000;
+  --prism-placeholder: #f5f5f4;
+  color: var(--prism-fg);
+}
+
+.prism-theme[data-theme="dark"] {
+  --prism-surface: #18181b;
+  --prism-surface-muted: #27272a;
+  --prism-surface-elevated: #3f3f46;
+  --prism-fg: #fafafa;
+  --prism-fg-secondary: #d4d4d8;
+  --prism-muted: #a1a1aa;
+  --prism-subtle: #71717a;
+  --prism-border: rgb(255 255 255 / 0.1);
+  --prism-border-subtle: rgb(255 255 255 / 0.05);
+  --prism-border-strong: rgb(255 255 255 / 0.15);
+  --prism-primary: #fafafa;
+  --prism-primary-fg: #18181b;
+  --prism-track: rgb(255 255 255 / 0.08);
+  --prism-track-strong: rgb(255 255 255 / 0.12);
+  --prism-accent: #38bdf8;
+  --prism-accent-subtle: rgb(14 165 233 / 0.15);
+  --prism-accent-border: rgb(56 189 248 / 0.35);
+  --prism-accent-fg: #e0f2fe;
+  --prism-success: #34d399;
+  --prism-success-subtle: rgb(16 185 129 / 0.15);
+  --prism-success-border: rgb(52 211 153 / 0.35);
+  --prism-success-fg: #d1fae5;
+  --prism-warning: #fbbf24;
+  --prism-warning-subtle: rgb(245 158 11 / 0.15);
+  --prism-warning-border: rgb(251 191 36 / 0.35);
+  --prism-warning-fg: #fef3c7;
+  --prism-inverse: #fafafa;
+  --prism-inverse-fg: #18181b;
+  --prism-dot-inactive: #52525b;
+  --prism-star: #fbbf24;
+  --prism-star-inactive: #52525b;
+  --prism-embed: #000000;
+  --prism-media: #000000;
+  --prism-placeholder: #27272a;
 }
