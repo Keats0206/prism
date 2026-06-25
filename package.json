@@ -14,11 +14,13 @@
     "@supabase/supabase-js": "^2.108.2",
     "@vercel/analytics": "^2.0.1",
     "ai": "^6.0.207",
+    "gsap": "^3.15.0",
     "lucide-react": "^1.20.0",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "twilio": "^6.0.2",
+    "vaul": "^1.1.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {

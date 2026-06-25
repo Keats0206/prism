@@ -3,7 +3,7 @@
 ## Setup checklist
 
 1. **Supabase**: Create a project, run `supabase/migrations/001_initial.sql` in the SQL editor.
-2. **Twilio**: Buy a US local number, set inbound webhook to `https://<your-domain>/api/sms/inbound` (POST).
+2. **Twilio**: Use a toll-free number (844/888/etc.), complete Toll-Free Verification, set inbound webhook to `https://www.rlylabs.com/api/sms/inbound` (POST — use `www`, apex redirects).
 3. **Env vars**: Copy `.env.example` → `.env.local` and fill in all values.
 4. **Deploy**: Push to Vercel (or run locally with `ngrok http 3000` + Twilio webhook pointing to ngrok URL).
 5. **Local dev**: Set `TWILIO_SKIP_SIGNATURE_VALIDATION=true` when tunneling.

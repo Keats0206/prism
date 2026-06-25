@@ -1,11 +1,11 @@
 import { getSupabase } from "./client";
-import type { Message } from "@/mutual/types";
+import type { CardPayload, Message } from "@/mutual/types";
 
 export async function logMessage(
   threadId: string,
   direction: "inbound" | "outbound",
   body: string,
-  options?: { userId?: string; twilioSid?: string },
+  options?: { userId?: string; twilioSid?: string; card?: CardPayload | null },
 ): Promise<Message> {
   const db = getSupabase();
   const { data, error } = await db
@@ -16,6 +16,7 @@ export async function logMessage(
       direction,
       body,
       twilio_sid: options?.twilioSid ?? null,
+      card: options?.card ?? null,
     })
     .select("*")
     .single();

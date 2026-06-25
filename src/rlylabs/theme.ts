@@ -12,14 +12,14 @@ export const toneGradients = {
   stone: "from-stone-200 to-stone-100",
 } as const;
 
-/** Richer gradients for Spotify-style app headers. */
+/** Single-hue gradients for Spotify-style app headers. */
 export const heroBackdropGradients = {
-  rose: "from-rose-600 via-rose-800 to-stone-950",
-  amber: "from-amber-600 via-orange-800 to-stone-950",
-  sky: "from-sky-600 via-cyan-800 to-stone-950",
-  emerald: "from-emerald-600 via-teal-800 to-stone-950",
-  violet: "from-violet-600 via-purple-900 to-stone-950",
-  stone: "from-stone-600 via-stone-800 to-stone-950",
+  rose: "from-rose-400 via-rose-500 to-rose-700",
+  amber: "from-amber-400 via-amber-500 to-amber-700",
+  sky: "from-sky-400 via-sky-500 to-sky-700",
+  emerald: "from-emerald-400 via-emerald-500 to-emerald-700",
+  violet: "from-violet-400 via-violet-500 to-violet-700",
+  stone: "from-stone-400 via-stone-500 to-stone-700",
 } as const;
 
 export type GradientTone = keyof typeof toneGradients;

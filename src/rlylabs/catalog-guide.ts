@@ -83,10 +83,11 @@ const COMPONENT_SPECS: Record<(typeof CATALOG_COMPONENT_NAMES)[number], string> 
     'Metric { label, value, detail?, tone: "neutral"|"accent"|"success", icon? } — stat card.',
   Row: "Row { title, subtitle, trailing?, icon? } — list row.",
   Action:
-    'Action { label, variant: "primary"|"secondary", icon? } — button.',
+    'Action { label, variant: "primary"|"secondary", icon? } — button. Emits "press"; attach behaviour with element on.press, e.g. "on": { "press": { "action": "setState", "params": { "statePath": "/done", "value": true } } }.',
   Progress:
     "Progress { label?, value: 0-100, leftLabel?, rightLabel? } — progress bar.",
-  Field: "Field { label, value?, placeholder? } — text input.",
+  Field:
+    'Field { label, value?, placeholder? } — text input. Two-way bind value to state: "value": { "$bindState": "/form/email" }.',
   Collection:
     'Collection { presentation: "card"|"plain", header: { title, subtitle?, trailing? }, items: [{ cells: [{ kind: "label"|"field"|"toggle"|"text"|"time"|"badge"|"progress", value?, placeholder?, icon?, checked? }] }] } — repeated data rows.',
   Board:
@@ -136,7 +137,7 @@ const COMPONENT_SPECS: Record<(typeof CATALOG_COMPONENT_NAMES)[number], string> 
   Poll:
     "Poll { question, options: [{ label, votes? }] } — tap-to-vote poll.",
   SegmentedControl:
-    "SegmentedControl { segments: [{ label, selected? }] } — mobile segmented tabs.",
+    'SegmentedControl { segments: [{ label, selected? }], value? } — mobile segmented tabs. Bind the selected index: "value": { "$bindState": "/view" }.',
   Banner:
     'Banner { title, message?, tone?: "neutral"|"accent"|"success"|"warning", icon? } — inline alert banner.',
   Timeline:
@@ -162,7 +163,7 @@ const COMPONENT_SPECS: Record<(typeof CATALOG_COMPONENT_NAMES)[number], string> 
   FullscreenHero:
     'FullscreenHero { eyebrow?, title, subtitle?, src?, tone?, aspect?: "square"|"wide"|"tall" } — Spotify-style cover header; square artwork over a tone gradient with title and metadata below.',
   Stepper:
-    "Stepper { label, value, min?, max?, step? } — plus/minus quantity stepper.",
+    'Stepper { label, value, min?, max?, step? } — plus/minus quantity stepper. Bind the count: "value": { "$bindState": "/qty" }.',
   FAB:
     'FAB { label?, icon?, variant?: "primary"|"accent" } — floating action button.',
   CommentThread:
@@ -188,7 +189,7 @@ const COMPONENT_SPECS: Record<(typeof CATALOG_COMPONENT_NAMES)[number], string> 
   BeforeAfter:
     "BeforeAfter { label?, beforeSrc?, afterSrc?, beforeLabel?, afterLabel?, position?: 0-100, tone? } — comparison slider.",
   Tabs:
-    "Tabs { tabs: [{ label, selected? }] } — content tabs; children are panel bodies in order.",
+    'Tabs { tabs: [{ label, selected? }], value? } — content tabs; children are panel bodies in order. Bind the active tab index: "value": { "$bindState": "/tab" }.',
   RangeSlider:
     "RangeSlider { label?, value: 0-100, min?, max?, step?, leftLabel?, rightLabel? } — continuous value slider for mood, budget, urgency.",
   CircularProgress:
@@ -205,7 +206,19 @@ const GUIDE_RULES = `You generate UI specs for the PRISM renderer. A spec is JSO
 Rules:
 - Every id referenced in a "children" array MUST exist as a key in "elements".
 - The root is usually a "Screen" whose children are the sections of the page.
-- Use only the components below, with exactly these props.`;
+- Use only the components below, with exactly these props.
+
+Make it interactive — wire state so the app actually responds:
+- Add a top-level "state" object (sibling of "root"/"elements") seeding any values the UI reads or writes. Use a plain NESTED object with bare keys (no leading slashes), e.g. "state": { "qty": 1, "done": false, "form": { "email": "" }, "todos": [] }. Everywhere else (statePath, $bindState, $state, visible) refers to these with JSON Pointer paths: "/qty", "/form/email", "/todos".
+- "on" and "visible" go on the ELEMENT object, NOT inside "props". Example: { "type": "Action", "props": { "label": "Mark done" }, "on": { "press": { "action": "setState", "params": { "statePath": "/done", "value": true } } } }.
+- Built-in actions (always available, no setup needed):
+  - setState { statePath, value } — write a value into state.
+  - pushState { statePath, value, clearStatePath? } — append to a state array. value may use { "$state": "/path" } refs and "$id" for auto IDs; clearStatePath resets an input after adding.
+  - removeState { statePath, index } — remove an array item by index.
+- Two-way binding: give a value prop { "$bindState": "/path" } to sync it with state (see Field, Stepper, Tabs, SegmentedControl below).
+- Read state in props with { "$state": "/path" }, or interpolate text with { "$template": "Hello \${/name}" }.
+- Show/hide elements with a "visible" condition, e.g. "visible": { "$state": "/done", "eq": true }.
+- Lists: put "repeat": { "statePath": "/todos", "key": "id" } on a container element; inside repeated children read item fields with { "$item": "field" }, the index with { "$index": true }, and two-way bind an item field with { "$bindItem": "field" }. Do NOT hardcode one element per array item.`;
 
 const GUIDE_FOOTER = `Any "icon" prop MUST be one of: ${iconNames.join(", ")}. Omit the prop if none fit.
 

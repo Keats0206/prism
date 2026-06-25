@@ -13,6 +13,12 @@ const elementSchema = z.object({
     .describe("Component name from the catalog, e.g. Screen, Hero, Collection"),
   props: z.record(z.string(), z.unknown()).nullable().optional(),
   children: z.array(z.string()).nullable().optional(),
+  // Interactivity metadata: event bindings (on.press → action), visibility
+  // conditions, and array repetition. Kept open — shapes are validated by the
+  // @json-render runtime, not here.
+  on: z.record(z.string(), z.unknown()).nullable().optional(),
+  visible: z.unknown().nullable().optional(),
+  repeat: z.unknown().nullable().optional(),
 });
 
 export const specSchema = z.object({
@@ -74,11 +80,26 @@ function sanitizeElement(value: unknown): Spec["elements"][string] | null {
     ? raw.children.filter((child): child is string => typeof child === "string")
     : undefined;
 
-  return {
+  const element: Spec["elements"][string] = {
     type: sanitizeElementType(raw.type),
     props: sanitizeProps(raw.props) ?? {},
     children,
   };
+
+  // Preserve interactivity metadata so generated specs stay interactive. These
+  // are validated/resolved by the @json-render runtime, so we pass them through
+  // untouched when present.
+  if (raw.on && typeof raw.on === "object" && !Array.isArray(raw.on)) {
+    element.on = raw.on as Spec["elements"][string]["on"];
+  }
+  if (raw.visible != null) {
+    element.visible = raw.visible as Spec["elements"][string]["visible"];
+  }
+  if (raw.repeat && typeof raw.repeat === "object" && !Array.isArray(raw.repeat)) {
+    element.repeat = raw.repeat as Spec["elements"][string]["repeat"];
+  }
+
+  return element;
 }
 
 function sanitizeSpec(raw: unknown, prompt?: string): Spec {
@@ -119,7 +140,7 @@ function readStringProp(
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
-function titleFromPrompt(prompt: string): string {
+export function titleFromPrompt(prompt: string): string {
   let text = prompt.trim();
   text = text.replace(
     /^(help me|show me|i need to|i need a|i need|create|make|build|plan|track|design)\s+/i,

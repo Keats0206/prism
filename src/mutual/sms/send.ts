@@ -1,4 +1,5 @@
 import { getTwilioClient, getTwilioPhoneNumber } from "./client";
+import { isMutualDevMode, recordDevOutbox } from "./dev";
 
 const START_CTA =
   "\n\nWant your own Mutual? Text START.";
@@ -8,12 +9,18 @@ export async function sendSms(
   body: string,
   options?: { includeStartCta?: boolean },
 ): Promise<string> {
-  const client = getTwilioClient();
-  const from = getTwilioPhoneNumber();
   const messageBody =
     options?.includeStartCta && !body.includes("Text START")
       ? `${body}${START_CTA}`
       : body;
+
+  if (isMutualDevMode()) {
+    console.info(`[mutual dev] SMS → ${to}: ${messageBody}`);
+    return recordDevOutbox(to, messageBody);
+  }
+
+  const client = getTwilioClient();
+  const from = getTwilioPhoneNumber();
 
   const message = await client.messages.create({
     to,

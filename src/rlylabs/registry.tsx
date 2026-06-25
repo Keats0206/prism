@@ -30,6 +30,26 @@ import {
   voiceNoteTones,
 } from "./theme";
 
+/**
+ * Drives an interactive component from the global state model when the prop is
+ * bound via `{ $bindState: "/path" }`, and falls back to component-local state
+ * otherwise. The binding path is stable for a given element across renders, so
+ * the conditional return below does not change hook order. The bound setter
+ * takes a concrete value (no functional updater), so callers must compute the
+ * next value from the returned current value.
+ */
+function useBindableState<T>(
+  propValue: T,
+  bindingPath: string | undefined,
+): [T, (next: T) => void] {
+  const [bound, setBound] = useBoundProp<T>(propValue, bindingPath);
+  const [local, setLocal] = useState<T>(propValue);
+  if (bindingPath != null) {
+    return [(bound ?? propValue) as T, setBound as (next: T) => void];
+  }
+  return [local, setLocal];
+}
+
 function spotifyEmbedSrc(
   url?: string | null,
   embedId?: string | null,
@@ -576,6 +596,9 @@ export const catalog = defineCatalog(schema, {
             selected: z.boolean().nullable().optional(),
           }),
         ),
+        // Selected segment index. Bind with { "$bindState": "/path" } to track
+        // the choice in state; falls back to `selected` / local state otherwise.
+        value: z.number().nullable().optional(),
       }),
       description:
         "Mobile segmented control for switching views or filters",
@@ -875,6 +898,9 @@ export const catalog = defineCatalog(schema, {
             selected: z.boolean().nullable().optional(),
           }),
         ),
+        // Active tab index. Bind with { "$bindState": "/path" } to track the
+        // active tab in state; falls back to `selected` / local state otherwise.
+        value: z.number().nullable().optional(),
       }),
       description:
         "Content tabs with switchable panels — use children for each tab panel body",
@@ -939,21 +965,9 @@ export const catalog = defineCatalog(schema, {
 
 export const { registry } = defineRegistry(catalog, {
   components: {
-    Screen: ({ props, children }) => {
-      const widths = {
-        sm: "max-w-md",
-        md: "max-w-xl",
-        lg: "max-w-3xl",
-      };
-
-      return (
-        <div
-          className={`mx-auto flex w-full flex-col gap-4 ${widths[props.maxWidth ?? "md"]}`}
-        >
-          {children}
-        </div>
-      );
-    },
+    Screen: ({ children }) => (
+      <div className="flex w-full min-w-0 flex-col">{children}</div>
+    ),
     ScreenHeader: ({ props }) => (
       <header className="flex flex-col gap-3">
         {props.eyebrow ? (
@@ -971,13 +985,13 @@ export const { registry } = defineRegistry(catalog, {
       </header>
     ),
     Stack: ({ props, children }) => (
-      <section className="w-full rounded-[26px] border border-border bg-surface p-4 shadow-sm">
+      <section className="w-full border-b border-border bg-surface py-4">
         {props.title ? (
-          <h2 className="mb-3 px-1 text-xs font-medium text-subtle">
+          <h2 className="mb-3 px-4 text-xs font-medium text-subtle">
             {props.title}
           </h2>
         ) : null}
-        <div className="flex flex-col gap-2">{children}</div>
+        <div className="flex flex-col gap-2 px-4">{children}</div>
       </section>
     ),
     Pill: ({ props }) => (
@@ -1048,9 +1062,10 @@ export const { registry } = defineRegistry(catalog, {
         ) : null}
       </div>
     ),
-    Action: ({ props }) => (
+    Action: ({ props, emit }) => (
         <button
           type="button"
+          onClick={() => emit("press")}
           className={`inline-flex h-10 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium ${actionVariants[props.variant]}`}
         >
           {props.icon ? <Icon name={props.icon} className="size-4" /> : null}
@@ -1061,7 +1076,7 @@ export const { registry } = defineRegistry(catalog, {
       const hasLabels = props.label || props.leftLabel || props.rightLabel;
 
       return (
-        <div className={hasLabels ? "rounded-xl bg-surface-muted px-3 py-2.5" : ""}>
+        <div className={hasLabels ? "border-b border-border bg-surface px-4 py-4" : ""}>
         {hasLabels ? (
           <div className="mb-2 flex items-center justify-between text-xs text-muted">
             <span>{props.label ?? props.leftLabel}</span>
@@ -1103,7 +1118,7 @@ export const { registry } = defineRegistry(catalog, {
 
       const body = (
         <>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 px-4">
             <div>
               <h2 className="text-base font-semibold tracking-tight text-fg">
                 {props.header.title}
@@ -1120,7 +1135,7 @@ export const { registry } = defineRegistry(catalog, {
               </span>
             ) : null}
           </div>
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="mt-4 flex flex-col gap-2 px-4">
             {props.items.map((item, itemIndex) => (
               <div
                 key={itemIndex}
@@ -1237,7 +1252,7 @@ export const { registry } = defineRegistry(catalog, {
       }
 
       return (
-        <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+        <section className="border-b border-border bg-surface py-4">
           {body}
         </section>
       );
@@ -2152,20 +2167,29 @@ export const { registry } = defineRegistry(catalog, {
         </section>
       );
     },
-    SegmentedControl: ({ props }) => {
+    SegmentedControl: ({ props, bindings, emit }) => {
       const initial =
-        props.segments.findIndex((segment) => segment.selected) >= 0
+        props.value ??
+        (props.segments.findIndex((segment) => segment.selected) >= 0
           ? props.segments.findIndex((segment) => segment.selected)
-          : 0;
-      const [active, setActive] = useState(initial);
+          : 0);
+      const [active, setActive] = useBindableState<number>(
+        initial,
+        bindings?.value,
+      );
+
+      const select = (index: number) => {
+        setActive(index);
+        emit("change");
+      };
 
       return (
-        <div className="inline-flex w-full rounded-2xl bg-surface-elevated p-1">
+        <div className="flex w-full border-b border-border bg-surface-elevated p-1">
           {props.segments.map((segment, index) => (
             <button
               key={index}
               type="button"
-              onClick={() => setActive(index)}
+              onClick={() => select(index)}
               className={`flex-1 rounded-xl px-3 py-2 text-xs font-medium transition ${
                 active === index
                   ? "bg-surface text-fg shadow-sm"
@@ -2476,9 +2500,9 @@ export const { registry } = defineRegistry(catalog, {
       const aspect = aspectHeights[props.aspect ?? "square"];
 
       return (
-        <section className="-mx-4 overflow-hidden sm:mx-0 sm:rounded-[28px]">
+        <section className="w-full overflow-hidden">
           <div
-            className={`relative bg-gradient-to-b px-5 pb-7 pt-8 ${heroBackdropGradients[tone]}`}
+            className={`relative bg-gradient-to-b pb-7 pt-8 ${heroBackdropGradients[tone]}`}
           >
             <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-white/10 blur-3xl" />
             <div className="relative mx-auto w-full max-w-[220px]">
@@ -2495,7 +2519,7 @@ export const { registry } = defineRegistry(catalog, {
                 ) : null}
               </div>
             </div>
-            <div className="relative mt-6 text-white">
+            <div className="relative mt-6 px-4 text-white">
               {props.eyebrow ? (
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
                   {props.eyebrow}
@@ -2512,11 +2536,19 @@ export const { registry } = defineRegistry(catalog, {
         </section>
       );
     },
-    Stepper: ({ props }) => {
+    Stepper: ({ props, bindings, emit }) => {
       const min = props.min ?? 0;
       const max = props.max ?? 99;
       const step = props.step ?? 1;
-      const [value, setValue] = useState(props.value);
+      const [value, setValue] = useBindableState<number>(
+        props.value,
+        bindings?.value,
+      );
+
+      const update = (next: number) => {
+        setValue(next);
+        emit("change");
+      };
 
       return (
         <section className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm">
@@ -2526,7 +2558,7 @@ export const { registry } = defineRegistry(catalog, {
               type="button"
               aria-label="Decrease"
               className="inline-flex size-9 items-center justify-center rounded-full bg-surface-elevated text-fg-secondary"
-              onClick={() => setValue((current) => Math.max(min, current - step))}
+              onClick={() => update(Math.max(min, value - step))}
             >
               <Icon name="minus" className="size-4" />
             </button>
@@ -2537,7 +2569,7 @@ export const { registry } = defineRegistry(catalog, {
               type="button"
               aria-label="Increase"
               className="inline-flex size-9 items-center justify-center rounded-full bg-primary text-primary-fg"
-              onClick={() => setValue((current) => Math.min(max, current + step))}
+              onClick={() => update(Math.min(max, value + step))}
             >
               <Icon name="plus" className="size-4" />
             </button>
@@ -2834,12 +2866,11 @@ export const { registry } = defineRegistry(catalog, {
       const cols = props.columns === "3" ? "grid-cols-3" : "grid-cols-2";
 
       return (
-        <section className={`grid ${cols} gap-2`}>
+        <section
+          className={`grid ${cols} divide-x divide-border border-b border-border bg-border`}
+        >
           {props.stats.map((stat, index) => (
-            <div
-              key={index}
-              className="rounded-2xl border border-border bg-surface px-3 py-3 shadow-sm"
-            >
+            <div key={index} className="bg-surface px-4 py-3">
               <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-subtle">
                 {stat.label}
               </p>
@@ -2914,22 +2945,31 @@ export const { registry } = defineRegistry(catalog, {
         </section>
       );
     },
-    Tabs: ({ props, children }) => {
+    Tabs: ({ props, children, bindings, emit }) => {
       const panels = Children.toArray(children);
       const initial =
-        props.tabs.findIndex((tab) => tab.selected) >= 0
+        props.value ??
+        (props.tabs.findIndex((tab) => tab.selected) >= 0
           ? props.tabs.findIndex((tab) => tab.selected)
-          : 0;
-      const [active, setActive] = useState(initial);
+          : 0);
+      const [active, setActive] = useBindableState<number>(
+        initial,
+        bindings?.value,
+      );
+
+      const select = (index: number) => {
+        setActive(index);
+        emit("change");
+      };
 
       return (
-        <section className="rounded-2xl border border-border bg-surface shadow-sm">
-          <div className="flex gap-1 overflow-x-auto border-b border-border-subtle px-2 pt-2">
+        <section className="w-full border-b border-border bg-surface">
+          <div className="flex gap-1 overflow-x-auto border-b border-border-subtle px-0 pt-2">
             {props.tabs.map((tab, index) => (
               <button
                 key={index}
                 type="button"
-                onClick={() => setActive(index)}
+                onClick={() => select(index)}
                 className={`shrink-0 rounded-t-xl px-4 py-2 text-xs font-medium transition ${
                   active === index
                     ? "bg-surface-muted text-fg"
@@ -2940,7 +2980,7 @@ export const { registry } = defineRegistry(catalog, {
               </button>
             ))}
           </div>
-          <div className="p-4">{panels[active] ?? null}</div>
+          <div className="py-4 px-4">{panels[active] ?? null}</div>
         </section>
       );
     },
